@@ -380,6 +380,9 @@ SUBROUTINE rt_sources_vsweep(x,uu,dx,dt,nn)
      ! Find which photon group we should be contributing to
      if(rt_src_group(k) .le. 0 .or. rt_src_group(k) .gt. nGroups) cycle
      group_ind = iGroups(rt_src_group(k))
+     ! STG HACK - SKIP IF WE'RE NOT INSIDE THE TIME LIMIT FOR EMITTING
+     if ((t-rt_src_tstart(k)) .lt. 0.) cycle
+     if(((t-rt_src_tend(k)) .gt. 0.) .and. (rt_src_tend(k) .gt. 0.)) cycle
      ! For "square" regions only:
      if(rt_source_type(k) .eq. 'square')then
        ! Exponent of choosen norm
