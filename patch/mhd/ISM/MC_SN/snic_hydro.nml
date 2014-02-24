@@ -1,0 +1,69 @@
+This namelist contains various input parameters for RAMSES runs
+
+&RUN_PARAMS  
+hydro=.true.
+poisson=.true.
+ncontrol=1
+nremap=2
+/
+
+&AMR_PARAMS 
+levelmin=6
+levelmax=7
+ngridmax=100000
+nexpand=1
+/
+
+
+&INIT_PARAMS
+mass_c=10000. !in solar mass
+rap=1.        !axis ratio
+cont=10.      !density contrast
+ff_sct=0.1    !freefall time/sound crossing time
+ff_rt=0.    !freefall time/rotation time
+ff_act=0.2    !freefall time/Alfven crossing time
+ff_vct=2.     !freefall time/Vrms crossing time
+thet_mag=0.8  !angle between magnetic field and rotation axis
+bl_fac=2.     !multiply the calculated boxlen by this factor
+!initfile='init'
+/
+
+&OUTPUT_PARAMS
+foutput=100
+fbackup=100
+noutput=2
+tout=0,1.
+/
+
+&POISSON_PARAMS 
+/
+
+&HYDRO_PARAMS
+gamma=1.66666667
+courant_factor=0.8
+slope_type=1
+scheme='muscl'
+riemann='hlld'
+riemann2d='hlld'
+switch_solv=1.d3
+/
+
+&PHYSICS_PARAMS
+n_star=1.d-13 !in g cm^-3
+T2_star=10.  !in K
+g_star=0.66666
+cooling=.true.
+!second_collapse=.true.
+sn_list=sn.list.t
+supernovae=.true.
+/
+
+&REFINE_PARAMS 
+x_refine=0.5
+y_refine=0.5
+z_refine=0.5
+r_refine=0.95
+jeans_refine=25*10
+interpol_var=1
+interpol_type=0
+/

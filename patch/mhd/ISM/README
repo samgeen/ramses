@@ -1,0 +1,16 @@
+15/11/2012
+This patch attempts to gather various developments which have been performed for the ISM. 
+So far it includes the following modifications with respect to the standard RAMSES version.
+
+umuscl:
+
+
+godunov_fine:
+in set_uold if pressure_fix is on, then temperature is always recalculated using a heat equation
+rather than the total energy equation.
+
+
+units: 
+
+
+cooling_fine:
