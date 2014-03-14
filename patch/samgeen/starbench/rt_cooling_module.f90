@@ -448,7 +448,7 @@ SUBROUTINE cool_step(U, dNpdt, dFpdt, dt, nH, nHe, Zsolar, a_exp         &
   ! STG HACK - SET TEMPERATURE FUNCTION DICTATED BY STARBENCH CODE
   Tn = 1.0d2
   Ti = 1.0d4
-  dU(1)=Tn+dU(2)*(Ti-Tn)/mu
+  dU(1)=(Tn+dU(2)*(Ti-Tn))/mu
 
   !(ix) Check if we are safe to use a bigger timestep in next iteration:
   dU=dU-U    
