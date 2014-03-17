@@ -7,7 +7,7 @@ NDIM = 3
 NPRE = 8
 NVAR = 8
 SOLVER = hydro
-PATCH = ../patch/samgeen/starbench
+PATCH = ../patch/samgeen/starbench ../patch/kimm/timeout
 EXEC = ramses
 ATON_FLAGS = #-DATON  # Uncomment to enable ATON.
 DEFINES = -DNVECTOR=$(NVECTOR) -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DNVAR=$(NVAR) -DSOLVER$(SOLVER) $(ATON_FLAGS)

@@ -1,0 +1,3 @@
+module cooling_module
+  use amr_parameters
+  implicit none
