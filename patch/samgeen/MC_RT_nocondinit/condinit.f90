@@ -1,0 +1,249 @@
+!================================================================
+!================================================================
+!================================================================
+!================================================================
+subroutine condinit(x,u,dx,nn)
+  use amr_parameters
+  use hydro_parameters
+  implicit none
+  integer ::nn                            ! Number of cells
+  real(dp)::dx                            ! Cell size
+  real(dp),dimension(1:nvector,1:nvar)::u ! Conservative variables
+  real(dp),dimension(1:nvector,1:ndim)::x ! Cell center position.
+  !================================================================
+  ! This routine generates initial conditions for RAMSES.
+  ! Positions are in user units:
+  ! x(i,1:3) are in [0,boxlen]**ndim.
+  ! U is the conservative variable vector. Conventions are here:
+  ! U(i,1): d, U(i,2:ndim+1): d.u,d.v,d.w and U(i,ndim+2): E.
+  ! Q is the primitive variable vector. Conventions are here:
+  ! Q(i,1): d, Q(i,2:ndim+1):u,v,w and Q(i,ndim+2): P.
+  ! If nvar >= ndim+3, remaining variables are treated as passive
+  ! scalars in the hydro solver.
+  ! U(:,:) and Q(:,:) are in user units.
+  !================================================================
+  integer::ivar,k
+  real(dp),dimension(1:nvector,1:nvar),save::q   ! Primitive variables
+
+
+  ! Call built-in initial condition generator
+  call region_condinit(x,q,dx,nn)
+
+  ! Add here, if you wish, some user-defined initial conditions
+  ! ........
+
+  ! Convert primitive to conservative variables
+  ! density -> density
+  u(1:nn,1)=q(1:nn,1)
+  ! velocity -> momentum
+  u(1:nn,2)=q(1:nn,1)*q(1:nn,2)
+#if NDIM>1
+  u(1:nn,3)=q(1:nn,1)*q(1:nn,3)
+#endif
+#if NDIM>2
+  u(1:nn,4)=q(1:nn,1)*q(1:nn,4)
+#endif
+  ! kinetic energy
+  u(1:nn,ndim+2)=0.0d0
+  u(1:nn,ndim+2)=u(1:nn,ndim+2)+0.5*q(1:nn,1)*q(1:nn,2)**2
+#if NDIM>1
+  u(1:nn,ndim+2)=u(1:nn,ndim+2)+0.5*q(1:nn,1)*q(1:nn,3)**2
+#endif
+#if NDIM>2
+  u(1:nn,ndim+2)=u(1:nn,ndim+2)+0.5*q(1:nn,1)*q(1:nn,4)**2
+#endif
+  ! pressure -> total fluid energy
+  u(1:nn,ndim+2)=u(1:nn,ndim+2)+q(1:nn,ndim+2)/(gamma-1.0d0)
+#if NVAR > NDIM + 2
+  ! passive scalars
+  do ivar=ndim+3,nvar
+     u(1:nn,ivar)=q(1:nn,1)*q(1:nn,ivar)
+  end do
+#endif
+
+end subroutine condinit
+
+
+!================================================================
+!================================================================
+!================================================================
+!================================================================
+subroutine velana(x,v,dx,t,ncell)
+  use amr_parameters
+  use hydro_parameters
+  implicit none
+  integer ::ncell                         ! Size of input arrays
+  real(dp)::dx                            ! Cell size
+  real(dp)::t                             ! Current time
+  real(dp),dimension(1:nvector,1:3)::v    ! Velocity field
+  real(dp),dimension(1:nvector,1:ndim)::x ! Cell center position.
+  !================================================================
+  ! This routine computes the user defined velocity fields.
+  ! x(i,1:ndim) are cell center position in [0,boxlen] (user units).
+  ! v(i,1:3) is the imposed 3-velocity in user units.
+  !================================================================
+  integer::i
+  real(dp)::xx,yy,zz,vx,vy,vz,rr,tt,omega,aa,twopi
+
+  ! Add here, if you wish, some user-defined initial conditions
+  aa=1.0
+  twopi=2d0*ACOS(-1d0)
+  do i=1,ncell
+
+     xx=x(i,1)
+     yy=x(i,2)
+     zz=x(i,3)
+
+     ! ABC
+     vx=aa*(cos(twopi*yy)+sin(twopi*zz))
+     vy=aa*(sin(twopi*xx)+cos(twopi*zz))
+     vz=aa*(cos(twopi*xx)+sin(twopi*yy))
+
+!!$     ! 1D advection test
+!!$     vx=1.0_dp
+!!$     vy=0.0_dp
+!!$     vz=0.0_dp
+
+!!$     ! Ponomarenko
+!!$     xx=xx-boxlen/2.0
+!!$     yy=yy-boxlen/2.0
+!!$     rr=sqrt(xx**2+yy**2)
+!!$     if(yy>0)then
+!!$        tt=acos(xx/rr)
+!!$     else
+!!$        tt=-acos(xx/rr)+twopi
+!!$     endif
+!!$     if(rr<1.0)then
+!!$        omega=0.609711
+!!$        vz=0.792624
+!!$     else
+!!$        omega=0.0
+!!$        vz=0.0
+!!$     endif
+!!$     vx=-sin(tt)*rr*omega
+!!$     vy=+cos(tt)*rr*omega
+
+     v(i,1)=vx
+     v(i,2)=vy
+     v(i,3)=vz
+
+  end do
+
+
+end subroutine velana
+!================================================================
+!================================================================
+!================================================================
+!================================================================
+subroutine calc_dmin(d_c)
+  use amr_commons
+  use hydro_commons
+  implicit none
+
+  real(dp):: d_c, cont_ic
+
+#ifdef UNCOMMENTED
+  cont_ic = 10.
+  dmin = d_c / cont / cont_ic
+
+  if (myid == 1) then
+    write(*,*) "dmin = ", dmin
+  endif
+
+#endif
+
+end subroutine calc_dmin
+!================================================================
+!================================================================
+!================================================================
+!================================================================
+subroutine calc_boxlen
+  use amr_commons
+  use amr_parameters
+  use hydro_commons
+  use poisson_parameters
+!  use const
+  implicit none
+  !================================================================
+  !this routine calculate boxlen
+  !================================================================
+  integer :: i
+  real(dp):: pi
+  real(dp):: d_c,zeta
+  real(dp):: res_int,r_0,C_s
+  integer::  np
+  real(dp)::scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2
+  real(dp),save:: first
+  real(dp):: mu=1.4d0 ! NOTE - MUST BE THE SAME AS IN units.f90!!
+
+#ifdef UNCOMMENTED
+!  real(dp)::myid
+
+!   myid=1
+
+    if (first .eq. 0.) then
+
+    pi=acos(-1.0d0)
+
+    call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
+    scale_T2 = scale_T2 * mu
+
+    !calculate the mass in code units (Msolar / Mparticle / pc^3
+    mass_c = mass_c * (2.d33 / (scale_d * scale_l**3) )
+
+    !calculate the sound speed
+    C_s = sqrt( T2_star / scale_T2)
+
+    !calculate  zeta=r_ext/r_0
+    zeta = sqrt(cont - 1.)
+
+    !calculate an integral used to compute the cloud radius
+    np=1000
+    res_int=0.
+    do i=1,np
+     res_int = res_int + log(1.+(zeta/np*i)**2) * zeta/np
+    enddo
+    res_int = zeta*log(1.+zeta**2) - res_int
+
+    !now we determine the central density and the external cloud radius
+    !we have mass = 2 pi rho_c r_0^2 z_0 * res_int
+    !which results from the integration of rho = dc/(1.+(x^2+y^2)/r_O^2+z^2/z_0^2)
+    !for (x^2+y^2)/r_O^2+z^2/z_0^2 < zeta
+    !we also have ff_sct = sqrt(3. pi / 32 / G / d_c) C_s / (r_0)
+    !which just state the ratio of freefall time over sound crossing time
+    !from these 2 formula, rho_c and r_0 are found to be:
+
+
+
+    r_0 = mass_c / (2.*pi*rap*res_int) * (ff_sct)**2 / (3.*pi/32.) / C_s**2
+
+    d_c = mass_c / (2.*pi*rap*res_int) / r_0**3
+
+    !it is equal to twice the length of the major axis
+    boxlen = r_0 * zeta * max(rap,1.) * 4.
+
+    ! Multiply boxlen by an extra factor
+    boxlen = bl_fac * boxlen
+
+    if (myid == 1) then
+    write(*,*) '** Cloud parameters estimated in calc-boxlen **'
+    write(*,*) 'inner radius (pc) ', r_0
+    write(*,*) 'peak density (cc) ', d_c
+    write(*,*) 'total box length (pc) ', boxlen
+    write(*,*) 'cloud mass (code units) ', mass_c
+    write(*,*) 'boxlen (code units) ',boxlen
+    write(*,*)
+    endif
+
+
+
+    first=1.
+    endif
+
+    call calc_dmin(d_c)
+
+#endif
+    ! HACK - HARD-CODED!!!!
+    boxlen = 135.136021103782
+
+end subroutine calc_boxlen
