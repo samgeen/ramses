@@ -48,6 +48,7 @@ subroutine condinit(x,u,dx,nn)
   real(dp)::ener_rot,ener_grav,ener_therm,ener_grav2,ener_turb
   real(dp),dimension(1000):: mass_rad
   real(dp):: mu=1.4d0 ! NOTE - MUST BE THE SAME AS IN units.f90!!
+  real(dp)::P_WNM
 !  real(dp)::myid
 
 !    myid=1
@@ -73,6 +74,8 @@ subroutine condinit(x,u,dx,nn)
 
     !calculate the sound speed
     C_s = sqrt( T2_star / scale_T2 )
+    ! calculate the pressure of the WNM; set temperature to 8000K and fiducial nH to 0.5
+    P_WNM = 8000d0 / scale_T2 * 0.5 / scale_nH
 
 
     if(myid == 1)  write(*,*) 'T2_star (K) ', T2_star
@@ -274,17 +277,16 @@ subroutine condinit(x,u,dx,nn)
        eli =  (x(i,1)/r_0)**2+(x(i,2)/r_0)**2+(x(i,3)/(r_0*rap))**2
 
 
-
        if( eli .gt. zeta**2) then
         q(i,1) = d_c / cont / cont_ic
-        q(i,5) = q(i,1) * C_s**2
+        q(i,5) = max(q(i,1) * C_s**2, P_WNM)
         !if the cloud is in pressure equilibrium with the surrounding medium
         !remove this line if the IC gas is isothermal as well
 !        q(i,5) = q(i,5) * cont_ic
 
        else
         q(i,1) = d_c / (1.+eli)
-        q(i,5) = q(i,1) * C_s**2
+        q(i,5) = max(q(i,1) * C_s**2, P_WNM)
 
        endif
 
