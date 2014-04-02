@@ -32,7 +32,7 @@ subroutine condinit(x,u,dx,nn)
   integer :: i,j,k,id,iu,iv,iw,ip
   real(dp):: pi
   integer :: ivar
-  real(dp),dimension(1:nvector,1:nvar),save::q   ! Primitive variables
+  real(dp),dimension(1:nvector,1:nvar+3),save::q   ! Primitive variables
 
   real(dp),save:: first
   real(dp),dimension(1:3,1:100,1:100,1:100),save::q_idl
@@ -48,8 +48,8 @@ subroutine condinit(x,u,dx,nn)
   real(dp)::ener_rot,ener_grav,ener_therm,ener_grav2,ener_turb
   real(dp),dimension(1000):: mass_rad
   real(dp):: mu=1.4d0 ! NOTE - MUST BE THE SAME AS IN units.f90!!
-  real(dp)::P_WNM
 !  real(dp)::myid
+  real(dp)::P_WNM=0.0d0
 
 !    myid=1
 
@@ -74,8 +74,8 @@ subroutine condinit(x,u,dx,nn)
 
     !calculate the sound speed
     C_s = sqrt( T2_star / scale_T2 )
-    ! calculate the pressure of the WNM; set temperature to 8000K and fiducial nH to 0.5
-    P_WNM = 8000d0 / scale_T2 * 0.5 / scale_nH
+    ! Set a WNM pressure with T=8000K and nH=0.5
+    P_WNM = 8000d0/scale_T2 * 0.5/scale_nH
 
 
     if(myid == 1)  write(*,*) 'T2_star (K) ', T2_star
@@ -154,11 +154,12 @@ subroutine condinit(x,u,dx,nn)
     !thus mass_c / phi = sig(0) / B_c
     !taking into account the fact that B_c = champ mag / sqrt(4 pi)
     ! we have in code units mu = sig(0) / (B_c*sqrt(4 pi)) / (sqrt(5)/(3 pi) * 0.53)
+#ifdef SOLVERmhd
     if (myid ==1) write(*,*) 'the mass to flux over critical mass to flux ratio in the case of a spheroidal cloud (not correct if rap ne 1)'
     if (myid ==1) write(*,*) 'mu= ',max_col_d / (B_c*sqrt(4.*pi)) / (sqrt(5.)/(3.*pi) * 0.53)
     !note here we make the approximation that max_col_d is equal to the column density through the cloud which is note exactly
     !the case since the column density of the external medium is also taken into account
-
+#endif
 
 
     !now read the turbulent velocity field used as initial condition
@@ -277,16 +278,19 @@ subroutine condinit(x,u,dx,nn)
        eli =  (x(i,1)/r_0)**2+(x(i,2)/r_0)**2+(x(i,3)/(r_0*rap))**2
 
 
+
        if( eli .gt. zeta**2) then
         q(i,1) = d_c / cont / cont_ic
-        q(i,5) = max(q(i,1) * C_s**2, P_WNM)
+        q(i,5) = q(i,1) * C_s**2
         !if the cloud is in pressure equilibrium with the surrounding medium
         !remove this line if the IC gas is isothermal as well
 !        q(i,5) = q(i,5) * cont_ic
+        q(i,5) = max(q(i,5),P_WNM)
 
        else
         q(i,1) = d_c / (1.+eli)
-        q(i,5) = max(q(i,1) * C_s**2, P_WNM)
+        q(i,5) = q(i,1) * C_s**2
+        q(i,5) = max(q(i,5),P_WNM)
 
        endif
 
@@ -340,7 +344,7 @@ subroutine condinit(x,u,dx,nn)
 
 
 
-#ifdef MCMHD
+#ifdef SOLVERmhd
    DO i=1,nn
    q(i,6)=0.
 
@@ -406,7 +410,7 @@ subroutine condinit(x,u,dx,nn)
   u(1:nn,5)=u(1:nn,5)+0.5*q(1:nn,1)*q(1:nn,3)**2
   u(1:nn,5)=u(1:nn,5)+0.5*q(1:nn,1)*q(1:nn,4)**2
   !kinetic + magnetic energy
-#ifdef MHDMC
+#ifdef SOLVERmhd
   u(1:nn,5)=u(1:nn,5)+0.125*(q(1:nn,6)+q(1:nn,nvar+1))**2
   u(1:nn,5)=u(1:nn,5)+0.125*(q(1:nn,7)+q(1:nn,nvar+2))**2
   u(1:nn,5)=u(1:nn,5)+0.125*(q(1:nn,8)+q(1:nn,nvar+3))**2
@@ -414,7 +418,7 @@ subroutine condinit(x,u,dx,nn)
   ! pressure -> total fluid energy
   u(1:nn,5)=u(1:nn,5)+q(1:nn,5)/(gamma-1.0d0)
   ! magnetic field
-#ifdef MHDMC
+#ifdef SOLVERmhd
   u(1:nn,6:8)=q(1:nn,6:8)
   u(1:nn,nvar+1:nvar+3)=q(1:nn,nvar+1:nvar+3)
   ! passive scalars
