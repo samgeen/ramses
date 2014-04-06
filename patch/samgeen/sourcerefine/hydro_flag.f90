@@ -214,3 +214,37 @@ subroutine jeans_length_refine(ind_cell,ok,ncell,ilevel)
 
 end subroutine jeans_length_refine
 
+SUBROUTINE source_refine(xx,ok,ncell,ilevel)
+
+! This routine flags cells immediately around point sources to the finest
+! level of refinement. The criteria for refinement at a point are:
+! a) The point is less than one ilevel cell width from a source.
+! b) The point is within  finest level cell widths from
+!    the source.
+!-------------------------------------------------------------------------
+  use amr_commons
+  use pm_commons
+  use hydro_commons
+  use poisson_commons
+  implicit none
+  integer::ncell,ilevel,i,k,nx_loc
+  real(dp),dimension(1:nvector,1:ndim)::xx
+  logical ,dimension(1:nvector)::ok
+  real(dp)::dx_loc,rx,ry,rz,w,rmag,r_src
+!-------------------------------------------------------------------------
+  nx_loc=(icoarse_max-icoarse_min+1)
+  dx_loc = boxlen*0.5D0**ilevel/dble(nx_loc)  
+  ! Loop over regions
+  do k=1,src_n_refine
+     r_src = src_r_refine(k)*dx_levelmax
+     do i=1,ncell
+        rx=xx(i,1)-src_x_refine(k)
+        ry=xx(i,1)-src_y_refine(k)
+        rz=xx(i,1)-src_z_refine(k)
+        rmag=sqrt(rx*rx + ry*ry + rz*rz)
+        if(rmag .le. 2*r_src+dx_loc) then
+           ok(i)=.true.
+        endif
+     end do
+  end do
+END SUBROUTINE source_refine
