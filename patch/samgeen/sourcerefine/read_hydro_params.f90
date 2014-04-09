@@ -11,7 +11,7 @@ subroutine read_hydro_params(nml_ok)
   !--------------------------------------------------
   integer::i,idim,nboundary_true=0
   integer ,dimension(1:MAXBOUND)::bound_type
-  real(dp)::scale,ek_bound,em_bound
+  real(dp)::scale,ek_bound
 
   !--------------------------------------------------
   ! Namelist definitions
@@ -19,39 +19,29 @@ subroutine read_hydro_params(nml_ok)
   namelist/init_params/filetype,initfile,multiple,nregion,region_type &
        & ,x_center,y_center,z_center,aexp_ini &
        & ,length_x,length_y,length_z,exp_region &
-       & ,d_region,u_region,v_region,w_region,p_region &
-       & ,A_region,B_region,C_region &
-       ! MC ADDITIONS
-       & ,mass_c,rap,cont,ff_sct,ff_rt,ff_act,ff_vct,thet_mag &
-       & ,bl_fac
+       & ,d_region,u_region,v_region,w_region,p_region
   namelist/hydro_params/gamma,courant_factor,smallr,smallc &
-       & ,niter_riemann,slope_type &
-       & ,pressure_fix,beta_fix,scheme,riemann,riemann2d &
-       ! MC ADDITIONS
-       & ,difmag
+       & ,niter_riemann,slope_type,difmag &
+       & ,pressure_fix,beta_fix,scheme,riemann
   namelist/refine_params/x_refine,y_refine,z_refine,r_refine &
        & ,a_refine,b_refine,exp_refine,jeans_refine,mass_cut_refine &
        & ,m_refine,mass_sph,err_grad_d,err_grad_p,err_grad_u &
-       & ,err_grad_A,err_grad_B,err_grad_C,err_grad_B2 &
        & ,floor_d,floor_u,floor_p,ivar_refine,var_cut_refine &
-       & ,floor_A,floor_B,floor_C,floor_B2 &
        & ,interpol_var,interpol_type &
        ! STG HACK
-       & ,src_r_refine,src_n_refine, &
+       & ,src_r_refine,src_n_refine &
        & ,src_x_refine,src_y_refine,src_z_refine
   namelist/boundary_params/nboundary,bound_type &
        & ,ibound_min,ibound_max,jbound_min,jbound_max &
        & ,kbound_min,kbound_max &
-       & ,d_bound,u_bound,v_bound,w_bound,p_bound &
-       & ,A_bound,B_bound,C_bound
+       & ,d_bound,u_bound,v_bound,w_bound,p_bound
   namelist/physics_params/cooling,haardt_madau,metal,isothermal,bondi &
        & ,m_star,t_star,n_star,T2_star,g_star,del_star,eps_star,jeans_ncells &
-       & ,eta_sn,yield,rbubble,f_ek,ndebris,f_w,mass_gmc &
-       & ,J21,a_spec,z_ave,z_reion,eta_mag,n_sink,bondi,delayed_cooling &
-       & ,self_shielding,smbh,agn,rsink_max,msink_max,B_ave &
-       & ,units_density,units_time,units_length &
-       ! MC ADDITIONS
-       & ,bx_bound,by_bound,bz_bound,turb,dens0,V0,temper_iso, Height0
+       & ,eta_sn,yield,rbubble,f_ek,ndebris,f_w,mass_gmc,kappa_IR &
+       & ,J21,a_spec,z_ave,z_reion,n_sink,ind_rsink,bondi,delayed_cooling &
+       & ,self_shielding,smbh,agn,rsink_max,msink_max &
+       & ,units_density,units_time,units_length,neq_chem,ir_feedback,ir_eff,merge_stars &
+       & ,larson_lifetime,flux_accretion
 
   ! Read namelist file
   rewind(1)
@@ -74,29 +64,10 @@ subroutine read_hydro_params(nml_ok)
   end if
   rewind(1)
   read(1,NML=physics_params,END=105)
+105 continue
 #ifdef ATON
   if(aton)call read_radiation_params(1)
 #endif
-
-  ! Calculate boxlen
-  call calc_boxlen
-
-  !since boxlen is not known initialy we must multiply the
-  !refining parameters by boxlen here
-  x_refine = x_refine*boxlen
-  y_refine = y_refine*boxlen
-  z_refine = z_refine*boxlen
-  r_refine = r_refine*boxlen
-
-
-! SAM GEEN - What is this. Seriously, this is the 21st century.
-105 continue
-
-  !--------------------------------------------------
-  ! Make sure virtual boundaries are expanded to 
-  ! account for staggered mesh representation
-  !--------------------------------------------------
-  nexpand_bound=2
 
   !--------------------------------------------------
   ! Check for star formation
@@ -113,8 +84,8 @@ subroutine read_hydro_params(nml_ok)
   !--------------------------------------------------
   ! Check for metal
   !--------------------------------------------------
-  if(metal.and.nvar<(ndim+6))then
-     if(myid==1)write(*,*)'Error: metals need nvar >= ndim+6'
+  if(metal.and.nvar<(ndim+3))then
+     if(myid==1)write(*,*)'Error: metals need nvar >= ndim+3'
      if(myid==1)write(*,*)'Modify hydro_parameters.f90 and recompile'
      nml_ok=.false.
   endif
@@ -263,15 +234,11 @@ subroutine read_hydro_params(nml_ok)
 #if NDIM>2
      boundary_var(i,4)=d_bound(i)*w_bound(i)
 #endif
-     boundary_var(i,6)=A_bound(i)
-     boundary_var(i,7)=B_bound(i)
-     boundary_var(i,8)=C_bound(i)
-     boundary_var(i,nvar+1)=A_bound(i)
-     boundary_var(i,nvar+2)=B_bound(i)
-     boundary_var(i,nvar+3)=C_bound(i)
-     ek_bound=0.5d0*d_bound(i)*(u_bound(i)**2+v_bound(i)**2+w_bound(i)**2)
-     em_bound=0.5d0*(A_bound(i)**2+B_bound(i)**2+C_bound(i)**2)
-     boundary_var(i,5)=ek_bound+em_bound+P_bound(i)/(gamma-1.0d0)
+     ek_bound=0.0d0
+     do idim=1,ndim
+        ek_bound=ek_bound+0.5d0*boundary_var(i,idim+1)**2/boundary_var(i,1)
+     end do
+     boundary_var(i,ndim+2)=ek_bound+P_bound(i)/(gamma-1.0d0)
   end do
 
   !-----------------------------------
@@ -287,7 +254,7 @@ subroutine read_hydro_params(nml_ok)
   !-----------------------------------
   ! Sort out passive variable indices
   !-----------------------------------
-  imetal=9
+  imetal=ndim+3
   idelay=imetal
   if(metal)idelay=imetal+1
   ixion=idelay

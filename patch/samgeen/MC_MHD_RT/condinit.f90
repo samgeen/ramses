@@ -49,6 +49,7 @@ subroutine condinit(x,u,dx,nn)
   real(dp),dimension(1000):: mass_rad
   real(dp):: mu=1.4d0 ! NOTE - MUST BE THE SAME AS IN units.f90!!
 !  real(dp)::myid
+  real(dp)::P_WNM=0.0d0
 
 !    myid=1
 
@@ -73,6 +74,8 @@ subroutine condinit(x,u,dx,nn)
 
     !calculate the sound speed
     C_s = sqrt( T2_star / scale_T2 )
+    ! Set a WNM pressure with T=8000K and nH=0.5
+    P_WNM = 8000d0/scale_T2 * 0.5/scale_nH
 
 
     if(myid == 1)  write(*,*) 'T2_star (K) ', T2_star
@@ -151,11 +154,12 @@ subroutine condinit(x,u,dx,nn)
     !thus mass_c / phi = sig(0) / B_c
     !taking into account the fact that B_c = champ mag / sqrt(4 pi)
     ! we have in code units mu = sig(0) / (B_c*sqrt(4 pi)) / (sqrt(5)/(3 pi) * 0.53)
+#ifdef SOLVERmhd
     if (myid ==1) write(*,*) 'the mass to flux over critical mass to flux ratio in the case of a spheroidal cloud (not correct if rap ne 1)'
     if (myid ==1) write(*,*) 'mu= ',max_col_d / (B_c*sqrt(4.*pi)) / (sqrt(5.)/(3.*pi) * 0.53)
     !note here we make the approximation that max_col_d is equal to the column density through the cloud which is note exactly
     !the case since the column density of the external medium is also taken into account
-
+#endif
 
 
     !now read the turbulent velocity field used as initial condition
@@ -281,10 +285,12 @@ subroutine condinit(x,u,dx,nn)
         !if the cloud is in pressure equilibrium with the surrounding medium
         !remove this line if the IC gas is isothermal as well
 !        q(i,5) = q(i,5) * cont_ic
+        q(i,5) = max(q(i,5),P_WNM)
 
        else
         q(i,1) = d_c / (1.+eli)
         q(i,5) = q(i,1) * C_s**2
+        q(i,5) = max(q(i,5),P_WNM)
 
        endif
 

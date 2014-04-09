@@ -105,10 +105,18 @@ module hydro_parameters
 
   ! Passive variables index
   ! NOTE - THESE VALUES SHOULD BE OVERWRITTEN BY read_hydro_params
+  ! STG HACK - ADDED PREPROCESSOR FLAGS *JUST IN CASE* (see line above)
+#ifdef SOLVERmhd
   integer::imetal=9
   integer::idelay=9
   integer::ixion=9
   integer::ichem=9
+#else
+  integer::imetal=6
+  integer::idelay=6
+  integer::ixion=6
+  integer::ichem=6
+#endif
 
   ! Supernova list
   integer, parameter:: MAXSN=100

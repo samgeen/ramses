@@ -189,7 +189,7 @@ module amr_parameters
   real(dp),dimension(1:100)::src_x_refine =-1.0 ! Position of sources
   real(dp),dimension(1:100)::src_y_refine =-1.0 ! Units [0->boxlen]
   real(dp),dimension(1:100)::src_z_refine =-1.0 !
-  real(dp),dimension(1:100)::src_n_refine =-1.0 ! Number of sources
+  integer::src_n_refine = 0                     ! Number of sources
 
   ! Initial condition files for each level
   logical::multiple=.false.

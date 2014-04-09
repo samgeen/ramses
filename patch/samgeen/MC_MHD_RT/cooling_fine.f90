@@ -152,7 +152,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
      ! Compute pressure
      do i=1,nleaf
-        T2(i)=uold(ind_leaf(i),5)
+        T2(i)=uold(ind_leaf(i),ndim+2)
      end do
      do i=1,nleaf
         ekk(i)=0.0d0
@@ -165,11 +165,13 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
      do i=1,nleaf
         emag(i)=0.0d0
      end do
+#ifdef SOLVERmhd
      do idim=1,3
         do i=1,nleaf
-           emag(i)=emag(i)+0.125d0*(uold(ind_leaf(i),idim+5)+uold(ind_leaf(i),idim+nvar))**2
+           emag(i)=emag(i)+0.125d0*(uold(ind_leaf(i),idim+ndim+2)+uold(ind_leaf(i),idim+nvar))**2
         end do
      end do
+#endif
      do i=1,nleaf
         T2(i)=(gamma-1.0)*(T2(i)-ekk(i)-emag(i))
      end do
@@ -321,7 +323,7 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
 
      ! Update total fluid energy
      do i=1,nleaf
-        T2(i) = uold(ind_leaf(i),5)
+        T2(i) = uold(ind_leaf(i),ndim+2)
      end do
      if(cooling.or.neq_chem)then
         do i=1,nleaf
@@ -330,11 +332,11 @@ subroutine coolfine1(ind_grid,ngrid,ilevel)
      endif
      if(isothermal)then
         do i=1,nleaf
-           uold(ind_leaf(i),5) = T2min(i)
+           uold(ind_leaf(i),ndim+2) = T2min(i)
         end do
      else
         do i=1,nleaf
-           uold(ind_leaf(i),5) = max(T2(i),T2min(i))
+           uold(ind_leaf(i),ndim+2) = max(T2(i),T2min(i))
         end do
      endif
 

@@ -8,7 +8,7 @@ NPRE = 8
 NVAR = 8
 NGROUPS = 3
 SOLVER = hydro
-PATCH = ../patch/samgeen/MC_RT
+PATCH =  ../patch/samgeen/sourcerefine ../patch/samgeen/MC_RT
 EXEC = ramses
 ATON_FLAGS = #-DATON  # Uncomment to enable ATON.
 DEFINES = -DNVECTOR=$(NVECTOR) -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DNVAR=$(NVAR) -DSOLVER$(SOLVER) $(ATON_FLAGS) -DNGROUPS=$(NGROUPS) -DRT

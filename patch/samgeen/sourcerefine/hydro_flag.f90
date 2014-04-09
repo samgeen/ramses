@@ -124,7 +124,7 @@ subroutine hydro_flag(ilevel)
         endif
 
         ! Apply geometry-based refinement criteria
-        if(r_refine(ilevel)>-1.0)then
+        if((r_refine(ilevel)>-1.0).or.(src_n_refine>0))then
            ! Compute cell center in code units
            do idim=1,ndim
               do i=1,ngrid
@@ -137,8 +137,8 @@ subroutine hydro_flag(ilevel)
                  xx(i,idim)=(xx(i,idim)-skip_loc(idim))*scale
               end do
            end do
-           call geometry_refine(xx,ind_cell,ok,ngrid,ilevel)
-           call source_refine(xx,ind_cell,ok,ngrid,ilevel)
+           !call geometry_refine(xx,ind_cell,ok,ngrid,ilevel)
+           call source_refine(xx,ok,ngrid,ilevel)
         end if
 
         ! Count newly flagged cells
@@ -236,11 +236,11 @@ SUBROUTINE source_refine(xx,ok,ncell,ilevel)
   dx_loc = boxlen*0.5D0**ilevel/dble(nx_loc)  
   ! Loop over regions
   do k=1,src_n_refine
-     r_src = src_r_refine(k)*dx_levelmax
+     r_src = src_r_refine(k)*boxlen*0.5D0**nlevelmax
      do i=1,ncell
         rx=xx(i,1)-src_x_refine(k)
-        ry=xx(i,1)-src_y_refine(k)
-        rz=xx(i,1)-src_z_refine(k)
+        ry=xx(i,2)-src_y_refine(k)
+        rz=xx(i,3)-src_z_refine(k)
         rmag=sqrt(rx*rx + ry*ry + rz*rz)
         if(rmag .le. 2*r_src+dx_loc) then
            ok(i)=.true.
