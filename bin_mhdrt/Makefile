@@ -50,10 +50,10 @@ DEFINES = -DNVECTOR=$(NVECTOR) -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DNVAR=$(NVAR) -DSO
 #FFLAGS = -cpp $(DEFINES) -DNOSYSTEM
 
 # --- MPI, ifort syntax, additional checks -----------
-#F90 = mpif90
-#FFLAGS = -O3 -g -traceback -fpe0 -ftrapuv -cpp $(DEFINES) -DNOSYSTEM
-F90 = mpif90 -O3 -frecord-marker=4 -fbacktrace -ffree-line-length-none
-FFLAGS = -cpp -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DSOLVER$(SOLVER) -DNVAR=$(NVAR) -DNPACS=$(NPACS) -DRT
+F90 = mpif90
+#FFLAGS = -O3 -traceback -fpe0 -ftrapuv -cpp $(DEFINES) -DNOSYSTEM
+#F90 = mpif90 -O3 -frecord-marker=4 -fbacktrace -ffree-line-length-none
+FFLAGS = -O3 -DNOSYSTEM -cpp -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DSOLVER$(SOLVER) -DNVAR=$(NVAR) -DNPACS=$(NPACS) -DRT
 
 
 #############################################################################

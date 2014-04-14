@@ -18,8 +18,13 @@ subroutine courant_fine(ilevel)
   real(dp)::dt_lev,dx,vol,scale
   real(kind=8)::mass_loc,ekin_loc,eint_loc,emag_loc,dt_loc
   real(kind=8)::mass_all,ekin_all,eint_all,emag_all,dt_all
+#ifdef SOLVERmhd
   real(kind=8),dimension(4)::comm_buffin,comm_buffout
   real(dp),dimension(1:nvector,1:nvar+3),save::uu
+#else
+  real(kind=8),dimension(3)::comm_buffin,comm_buffout
+  real(dp),dimension(1:nvector,1:nvar),save::uu
+#endif
   real(dp),dimension(1:nvector,1:ndim),save::gg
 
   if(numbtot(1,ilevel)==0)return
@@ -64,7 +69,11 @@ subroutine courant_fine(ilevel)
         end do
 
         ! Gather hydro variables
+#ifdef SOLVERmhd
         do ivar=1,nvar+3
+#else
+        do ivar=1,nvar
+#endif
            do i=1,nleaf
               uu(i,ivar)=uold(ind_leaf(i),ivar)
            end do
@@ -87,24 +96,29 @@ subroutine courant_fine(ilevel)
         
         ! Compute total energy
         do i=1,nleaf
-           ekin_loc=ekin_loc+uu(i,5)*vol
+           ekin_loc=ekin_loc+uu(i,ndim+2)*vol
         end do
         
         ! Compute total magnetic energy
+#ifdef SOLVERmhd
         do ivar=1,3
            do i=1,nleaf
               emag_loc=emag_loc+0.125d0*(uu(i,5+ivar)+uu(i,nvar+ivar))**2*vol
            end do
         end do
-        
+#endif
         ! Compute total internal energy
         do i=1,nleaf
-           eint_loc=eint_loc+uu(i,5)*vol
+           eint_loc=eint_loc+uu(i,ndim+2)*vol
         end do
-        do ivar=1,3
+        do ivar=1,ndim
            do i=1,nleaf
+#ifdef SOLVERmhd
               eint_loc=eint_loc-0.5d0*uu(i,1+ivar)**2/uu(i,1)*vol &
                    & -0.125d0*(uu(i,5+ivar)+uu(i,nvar+ivar))**2*vol
+#else
+              eint_loc=eint_loc-0.5d0*uu(i,1+ivar)**2/uu(i,1)*vol
+#endif
            end do
         end do
         
@@ -125,7 +139,9 @@ subroutine courant_fine(ilevel)
   comm_buffin(1)=mass_loc
   comm_buffin(2)=ekin_loc
   comm_buffin(3)=eint_loc
+#ifdef SOLVERmhd
   comm_buffin(4)=emag_loc
+#endif
   call MPI_ALLREDUCE(comm_buffin,comm_buffout,4,MPI_DOUBLE_PRECISION,MPI_SUM,&
        &MPI_COMM_WORLD,info)
   call MPI_ALLREDUCE(dt_loc     ,dt_all      ,1,MPI_DOUBLE_PRECISION,MPI_MIN,&
@@ -133,7 +149,9 @@ subroutine courant_fine(ilevel)
   mass_all=comm_buffout(1)
   ekin_all=comm_buffout(2)
   eint_all=comm_buffout(3)
+#ifdef SOLVERmhd
   emag_all=comm_buffout(4)
+#endif
 #endif
 #ifdef WITHOUTMPI
   mass_all=mass_loc
@@ -182,6 +200,11 @@ subroutine velocity_fine(ilevel)
   real(dp)::scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2,Cwnm
   real(dp)::dx_min, fact, Emag,Emag0
 
+! STG HACK - ignore if not MHD
+! TODO: Take boundary cleaner and use for non-MHD solver
+#ifndef SOLVERmhd
+  return
+#endif
 
   call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
 
