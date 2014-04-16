@@ -400,12 +400,11 @@ recursive subroutine amr_step(ilevel,icount)
      if(eta_mag>0d0.and.ilevel==levelmin)then
         call diffusion
      endif
-#endif
 
     call velocity_fine(ilevel)
 
   end if
-
+#endif
   !-----------------------
   ! Compute refinement map
   !-----------------------

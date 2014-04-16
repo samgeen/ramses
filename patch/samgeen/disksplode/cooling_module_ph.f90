@@ -2,6 +2,7 @@
 !=======================================================================
 subroutine solve_cooling_ph(nH,T2,zsolar,boost,dt,deltaT2,ncell)
 !=======================================================================
+  use cooling_module
   implicit none
   ! Input/output variables to this function
   ! nH - hydrogen number density in PHYSICAL units
@@ -18,7 +19,7 @@ subroutine solve_cooling_ph(nH,T2,zsolar,boost,dt,deltaT2,ncell)
   real(kind=8)::NN,TT, dt_tot_unicode
   ! Temporary variables
   integer::i
-  real(kind=8)::TT_ini, mu
+  real(kind=8)::TT_ini, mu, T0
   ! Units
   real(kind=8) :: scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2
   call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)

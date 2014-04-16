@@ -21,10 +21,17 @@ subroutine rho_ana(x,d,dx,ncell)
   real(dp):: dmass,emass,xmass,ymass,zmass,rr,rx,ry,rz,dd
   real(dp):: a1,a2,z0,a1_rho,a2_rho,G,mp,pi,Myear_s
 
+  real(dp)::invb_fact,sigma_g_cgs,T0
+  real(dp)::scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2
+
   ! Some constants in cgs
   real(kind=8),parameter ::kB      = 1.3806200d-16
   !real(kind=8),parameter ::mH      = 1.6600000d-24
   !real(kind=8),parameter ::G       = 6.674d-8
+  real(kind=8),parameter ::msolar      = 1.9891d33
+  real(kind=8),parameter ::pc = 3.08567758d18
+  real(dp):: mu=1.4d0 ! NOTE - MUST BE THE SAME AS IN units.f90!!
+
 
 !!  emass=gravity_params(1) ! Softening length
 !!  xmass=gravity_params(2) ! Point mass coordinates
@@ -32,12 +39,15 @@ subroutine rho_ana(x,d,dx,ncell)
 !!  zmass=gravity_params(4)
 !!  dmass=1.0/(emass*(1.0+emass)**2)
 
+  call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
+  scale_T2 = scale_T2 * mu
+
+
   pi=ACOS(-1.)
   mp = 1.660531d-24  ! gramme
   G = 6.674d-8
   Myear_s=1.d6*365.*3600.*24.
   !Mpc=3.08567758d24
-  Msolar = 1.9891d33
 
 !! add the vertical galactic gravitational field
 !! Kuijken & Gilmore 1989 taken from Joung & MacLow (2006)
@@ -59,7 +69,7 @@ subroutine rho_ana(x,d,dx,ncell)
    ! Calculate in cgs then convert
    ! Namelist parameters are fg, sigma_g
    T0=dx ! HACK - IMPORT T0 WITH dx THIS IS A BAD IDEA CHANGE THIS
-   sigma_g_cgs = sigma_g * Msolar * pc ** (-2.0)
+   sigma_g_cgs = sigma_g * msolar * pc ** (-2.0)
    invb_fact = mp*pi*G*sigma_g_cgs / (fg*kB*T0)
 
   do i=1,ncell

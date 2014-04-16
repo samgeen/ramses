@@ -33,7 +33,7 @@ subroutine condinit(x,u,dx,nn)
   real(dp):: pi
   integer :: ivar
   real(dp),dimension(1:nvector,1:nvar+3),save::q   ! Primitive variables
-  real(dp),dimension(1:nvector,1)::rho     ! Calculate rho_ana with this
+  real(dp),dimension(1:nvector)::rho     ! Calculate rho_ana with this
 
   real(dp),save:: first
   real(dp),dimension(1:3,1:100,1:100,1:100),save::q_idl
@@ -49,6 +49,7 @@ subroutine condinit(x,u,dx,nn)
   real(dp)::ener_rot,ener_grav,ener_therm,ener_grav2,ener_turb
   real(dp),dimension(1000):: mass_rad
   real(dp):: mu=1.4d0 ! NOTE - MUST BE THE SAME AS IN units.f90!!
+  real(dp):: T0=1e4
 !  real(dp)::myid
   real(dp)::P_WNM=0.0d0
 
@@ -273,7 +274,7 @@ subroutine condinit(x,u,dx,nn)
    ! Get the density field
    ! HACK - pass T0 to this by replacing dx
    T0 = 1e4 ! TODO: change cooling function
-   rho_ana(x,rho,T0,nn)
+   call rho_ana(x,rho,T0,nn)
    
 
    DO i=1,nn
@@ -324,7 +325,7 @@ subroutine condinit(x,u,dx,nn)
           ! STG HACK - remove vel
          !q(i, 2:4) = 0.0
        endif
-       g(i, 2:4) = 0.0
+       q(i, 2:4) = 0.0
 
 
   ENDDO
