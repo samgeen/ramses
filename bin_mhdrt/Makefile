@@ -6,11 +6,12 @@ NVECTOR = 64
 NDIM = 3
 NPRE = 8
 NVAR = 11
+NGROUPS = 3
 SOLVER = mhd
 PATCH = ../patch/samgeen/MC_MHD_RT
 EXEC = ramses
 ATON_FLAGS = #-DATON  # Uncomment to enable ATON.
-DEFINES = -DNVECTOR=$(NVECTOR) -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DNVAR=$(NVAR) -DSOLVER$(SOLVER) $(ATON_FLAGS)
+DEFINES = -DNVECTOR=$(NVECTOR) -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DNVAR=$(NVAR) -DSOLVER$(SOLVER) $(ATON_FLAGS) -DNGROUPS=$(NGROUPS) -DRT
 #############################################################################
 # Fortran compiler options and directives
 
@@ -52,8 +53,9 @@ DEFINES = -DNVECTOR=$(NVECTOR) -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DNVAR=$(NVAR) -DSO
 # --- MPI, ifort syntax, additional checks -----------
 F90 = mpif90
 #FFLAGS = -O3 -traceback -fpe0 -ftrapuv -cpp $(DEFINES) -DNOSYSTEM
+FFLAGS = -O3 -cpp $(DEFINES) -DNOSYSTEM
 #F90 = mpif90 -O3 -frecord-marker=4 -fbacktrace -ffree-line-length-none
-FFLAGS = -O3 -DNOSYSTEM -cpp -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DSOLVER$(SOLVER) -DNVAR=$(NVAR) -DNPACS=$(NPACS) -DRT
+#FFLAGS = -O3 -DNOSYSTEM -cpp -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DSOLVER$(SOLVER) -DNVAR=$(NVAR)
 
 
 #############################################################################
