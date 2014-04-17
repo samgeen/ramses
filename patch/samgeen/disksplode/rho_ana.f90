@@ -73,7 +73,8 @@ subroutine rho_ana(x,d,dx,ncell)
    invb_fact = mp*pi*G*sigma_g_cgs / (fg*kB*T0)
 
   do i=1,ncell
-     rz=x(i,3)-0.5*boxlen
+     ! NOTE - WE'RE MAKING THE PLANE OF THE DISK THE X DIRECTION!!
+     rz=x(i,1)-0.5*boxlen
      d(i)= a1_rho / (1.+(rz/z0)**2)**(1.5) + a2_rho
      d(i) = 0.5 * sigma_g_cgs * invb_fact * &
             & cosh(rz*scale_l*invb_fact)**(-2.0) / scale_d

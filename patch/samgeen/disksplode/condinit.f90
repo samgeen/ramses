@@ -167,6 +167,7 @@ subroutine condinit(x,u,dx,nn)
 #endif
 
 
+#ifdef TURBULENCE
     !now read the turbulent velocity field used as initial condition
     if( myid ==1) write(*,*) 'Read the file which contains the initial turbulent velocity field'
     open(20,file='ramses.data',form='formatted')
@@ -268,8 +269,10 @@ subroutine condinit(x,u,dx,nn)
 
     if (myid ==1)  write(*,*) 'Reading achieved'
     first = 1.
+
+#endif
    endif
- 
+
 
    ! Get the density field
    ! HACK - pass T0 to this by replacing dx
