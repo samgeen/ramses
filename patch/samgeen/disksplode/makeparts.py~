@@ -1,0 +1,70 @@
+'''
+Make the ascii input file for particles for the disksplode simulations
+Sam Geen, April 2014
+'''
+
+import os
+import numpy as np
+
+def checkexists(fname,num):
+    '''
+    Back up the file it if exists
+    '''
+    if num != 0:
+        full = fname+".saf"+str(num).zfill(5)):
+    else:
+        full = fname
+    if os.file.exists(full):
+        checkexists(fname,num+1)
+    else:
+        os.system("cp "+fname+" "+full)
+
+def calc_sfr(sigma_g):
+    '''
+    Star formation rate in Msolar Myr-1
+    Eqn 13 in Creasey et al 2013
+    '''
+    area = 1.0 # in kpc^2
+    return 2.5e-4*(sigma_g**1.4)*area
+
+def calc_nsn(sigma_g,simtime):
+    '''
+    Calculate the number of supernovae over the age of the simulation
+    sigma_g in Msolar/pc^2, simtime in Myr
+    '''
+    # Number of supernovae per 100Msolar
+    # Below equation 14 Creasey et al 2013
+    snperm = 1.8e-2
+    mpertime = calc_sfr(sigma_g)
+    mtot = mpertime * simtime
+    nsn = snperm * mtot
+    return nsn 
+
+def run(sigma_g,simtime):
+    '''
+    Make the input file
+    sigma_g is in Msolar/pc^2
+    simtime in Myr
+    '''
+    # Open the file and back up old files if necessary
+    filename = "sn_parts.dat"
+    checkexists(filename)
+    f = open(filename,"w")
+    # Set up arrays
+    nsn = calc_nsn(sigma_g,simtime)
+    x = IMPLEMENT DENSITY PROFILE IN rho_ana HERE AND USE THAT TO DISTRIBUTE X
+    y = np.random.rand(nsn)
+    z = np.random.rand(nsn)
+    u = np.zeros(nsn)
+    y = np.zeros(nsn)
+    z = np.zeros(nsn)
+    i = -np.arange(1,nsn+1,dtype=np.int32)
+    m = # TODO PUT MASS IN CODE UNITS
+    t = # TODO PUT TIME IN CODE UNITS SO THAT:
+        #      explosion time = -(current_time+10Myr)
+    # Done!
+    f.close()
+
+
+if __name__=="__main__":
+    run(sigma_g=11.61,simtime=10.0)
