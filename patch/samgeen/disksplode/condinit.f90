@@ -293,6 +293,7 @@ subroutine condinit(x,u,dx,nn)
        q(i,1) = rho(i)
        q(i,5) = q(i,1) * T0 / scale_T2
 
+#ifdef TURBULENT
 
        if(all(abs(x(i,:) / (boxlen / bl_fac)) <= 0.5)) then
          !initialise the turbulent velocity field
@@ -328,6 +329,8 @@ subroutine condinit(x,u,dx,nn)
           ! STG HACK - remove vel
          !q(i, 2:4) = 0.0
        endif
+
+#endif
        q(i, 2:4) = 0.0
 
 

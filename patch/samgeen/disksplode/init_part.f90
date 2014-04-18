@@ -791,10 +791,11 @@ subroutine init_part
                  mm(i  )=mm1
                  tt(i  )=tt1
                  ! Set star particles to -ve indices, i.e. not SN yet
-                 if (tt.lt.0.0) then
+                 if (tt(i).lt.0.0) then
                     ii(i  )=-indglob
                  else
                     ii(i  )=indglob
+                 endif
               end do
 100           continue
               if(jpart<nvector)eof=.true.

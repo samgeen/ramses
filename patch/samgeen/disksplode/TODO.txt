@@ -1,6 +1,6 @@
 INITIAL CONDITIONS
-- Debug rho_ana and condinit
-- Add variables to namelist
+- Debug rho_ana and condinit = DONE
+- Add variables to namelist = DONE
 
 STARS
 - Add star particles by hand in ascii file (movement turned off in amr_step)
