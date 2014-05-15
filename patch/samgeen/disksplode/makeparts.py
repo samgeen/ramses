@@ -58,10 +58,10 @@ def xdist(fg,sigma_g,nsn):
     rho = sigma_g / 2.0 / b * np.cosh(xin/(b/1e3))**(-2.0) # Volume density
     mcol = sigma_g
     x = rho / mcol # Distribution is the volume density / column density
-    import matplotlib.pyplot as plt
-    plt.plot(xin,x,".")
-    plt.yscale("log")
-    plt.savefig("xdisttest.png")
+    #import matplotlib.pyplot as plt
+    #plt.plot(xin,x,".")
+    #plt.yscale("log")
+    #plt.savefig("xdisttest.png")
     return x
 
 def run(fg,sigma_g,simtime):
@@ -71,7 +71,7 @@ def run(fg,sigma_g,simtime):
     simtime in Myr
     '''
     # Open the file and back up old files if necessary
-    filename = "sn_parts.dat"
+    filename = "ic_part"
     checkexists(filename)
     f = open(filename,"w")
     # Masses stuff
@@ -80,13 +80,13 @@ def run(fg,sigma_g,simtime):
     mpersn = 1.0/eff_sn * 100.0 * msolaring
     mpersn /= units_density*units_length**3.0 # in code units
     # Time stuff
-    toff = 10.0 # 10Myr explosion offset to remove beforehand
     
     # Set up arrays
+    boxlen = 1e3 # unit length is pc, boxlen is kpc
     nsn = calc_nsn(sigma_g,simtime)
-    x = xdist(fg,sigma_g,nsn)
-    y = np.random.rand(nsn)
-    z = np.random.rand(nsn)
+    x = xdist(fg,sigma_g,nsn)*boxlen
+    y = np.random.rand(nsn)*boxlen - 0.5*boxlen
+    z = np.random.rand(nsn)*boxlen - 0.5*boxlen
     u = np.zeros(nsn)
     v = np.zeros(nsn)
     w = np.zeros(nsn)
@@ -94,16 +94,17 @@ def run(fg,sigma_g,simtime):
     m = np.zeros(nsn)+mpersn
     # Set supernovae off at random times inside simtime
     # Subtract offset to explode at zero-time
-    t = np.random.rand(nsn)*simtime - toff
+    t = np.random.rand(nsn)*simtime
     t *= Myrins
-    t /= -units_time # Has to be -ve for the GMC feedback model
+    t /= units_time # Has to be -ve for the GMC feedback model
     for j in range(0,nsn):
-        f.write(str(x[j])+" "+str(y[j])+" "+str(z[j])+\
-                str(u[j])+" "+str(v[j])+" "+str(w[j])+\
-                str(m[j])+" "+str(t[j])+"\n")
+        line=str(x[j])+" "+str(y[j])+" "+str(z[j])+" "+\
+                str(u[j])+" "+str(v[j])+" "+str(w[j])+" "+\
+                str(m[j])+" "+str(t[j])+"\n"
+        f.write(line)
     # Done!
     f.close()
 
 
 if __name__=="__main__":
-    run(fg=0.1,sigma_g=11.61,simtime=10.0)
+    run(fg=0.1,sigma_g=11.61,simtime=20.0)

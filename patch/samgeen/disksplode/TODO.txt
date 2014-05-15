@@ -1,12 +1,6 @@
-INITIAL CONDITIONS
-- Debug rho_ana and condinit = DONE
-- Add variables to namelist = DONE
-
-STARS
-- Add star particles by hand in ascii file (movement turned off in amr_step)
---> Needs calculating SFR, etc
-- Set IDs to be -ve and age (tp) so that explosion time = -(current_time+10Myr)
-- if(idp(ipart).le.0.and. tp(ipart).lt.(current_time-t0))then
+DEBUGGING
+- Figure out why stars a) don't have good ages b) aren't going supernova -
+query particle files - maybe because stars isn't turned on??
 
 COOLING
 - Allow constant cooling functions

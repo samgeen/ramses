@@ -173,9 +173,8 @@ end subroutine courant_fine
 !#########################################################
 !#########################################################
 !#########################################################
-!#########################################################
 subroutine velocity_fine(ilevel)
-  use amr_commons      !, ONLY: dp,ndim,nvector,boxlen,t
+  Use amr_commons      !, ONLY: dp,ndim,nvector,boxlen,t
 !  use hydro_parameters !, ONLY: nvar,boundary_var,gamma,bx_bound,by_bound,bz_bound,turb,dens0,V0
   use hydro_commons
   implicit none
@@ -204,7 +203,7 @@ subroutine velocity_fine(ilevel)
 ! TODO: Take boundary cleaner and use for non-MHD solver
 #ifndef SOLVERmhd
   return
-#endif
+#endif 
 
   call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
 
@@ -214,7 +213,7 @@ subroutine velocity_fine(ilevel)
 
   time = t * Cwnm / boxlen
 
- 
+
 
   if(numbtot(1,ilevel)==0)return
 
@@ -293,7 +292,7 @@ subroutine velocity_fine(ilevel)
              ind_cell_vois = ind_cell_vois - ngridmax
            endif
 
-           uold(ind_cell(i),1:11) =  uold(ind_cell_vois,1:11) 
+           uold(ind_cell(i),1:nvar+3) =  uold(ind_cell_vois,1:nvar+3) 
 
            A=0.5*(uold(ind_cell(i),6)+uold(ind_cell(i),nvar+1))
            B=0.5*(uold(ind_cell(i),7)+uold(ind_cell(i),nvar+2))
@@ -305,32 +304,18 @@ subroutine velocity_fine(ilevel)
 
            ! we have to modify the 2 normal components of the magnetic field
            if(ind .eq. 2 .or. ind .eq. 4 .or. ind .eq. 6 .or. ind .eq. 8) then 
-              uold(ind_cell(i),9) = uold(ind_cell_vois,6)
+              uold(ind_cell(i),nvar+1) = uold(ind_cell_vois,6)
  
 
-              uold(ind_cell(i),6)  = uold(ind_cell(i),9) + uold(ind_cell(i),10) + uold(ind_cell(i),11) - uold(ind_cell(i),7) - uold(ind_cell(i),8) 
+              uold(ind_cell(i),6)  = uold(ind_cell(i),nvar+1) + uold(ind_cell(i),nvar+2) + uold(ind_cell(i),nvar+3) - uold(ind_cell(i),7) - uold(ind_cell(i),8) 
            else
               !should be equal to uold(ind_cell(i),7) of the preceeding case 
-              uold(ind_cell(i),9) =  uold(ind_cell_vois,6) + uold(ind_cell(i),10) + uold(ind_cell(i),11) - uold(ind_cell(i),7)  - uold(ind_cell(i),8) 
+              uold(ind_cell(i),nvar+1) =  uold(ind_cell_vois,6) + uold(ind_cell(i),nvar+2) + uold(ind_cell(i),nvar+3) - uold(ind_cell(i),7)  - uold(ind_cell(i),8) 
 
               !ensure div B
-              uold(ind_cell(i),6) =  uold(ind_cell(i),9) + uold(ind_cell(i),10) + uold(ind_cell(i),11)  -uold(ind_cell(i),7) - uold(ind_cell(i),8) 
+              uold(ind_cell(i),6) =  uold(ind_cell(i),nvar+1) + uold(ind_cell(i),nvar+2) + uold(ind_cell(i),nvar+3)  -uold(ind_cell(i),7) - uold(ind_cell(i),8) 
            endif
 
-
-
-!           if(ind .eq. 1 .or. ind .eq. 3 .or. ind .eq. 5 .or. ind .eq. 7) then 
-!              uold(ind_cell(i),6) = uold(ind_cell_vois,9)
- 
-!              uold(ind_cell(i),9) = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),10) - uold(ind_cell(i),11) 
-!!              uold(ind_cell(i),9) = uold(ind_cell(i),10) + uold(ind_cell(i),11) - uold(ind_cell(i),6) - uold(ind_cell(i),7) - uold(ind_cell(i),8) 
-!           else
-!              !should be equal to uold(ind_cell(i),9) of the preceeding case 
-!              uold(ind_cell(i),6) =  uold(ind_cell(i),7) + uold(ind_cell(i),8)  + uold(ind_cell(i),9) - uold(ind_cell(i),10) - uold(ind_cell(i),11) 
-
-!              !ensure div B
-!              uold(ind_cell(i),9) = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),10) - uold(ind_cell(i),11) 
-!           endif
 
 
 
@@ -358,7 +343,7 @@ subroutine velocity_fine(ilevel)
              ind_cell_vois = ind_cell_vois + ngridmax
            endif
 
-           uold(ind_cell(i),1:11) =  uold(ind_cell_vois,1:11) 
+           uold(ind_cell(i),1:nvar+3) =  uold(ind_cell_vois,1:nvar+3) 
 
            A=0.5*(uold(ind_cell(i),6)+uold(ind_cell(i),nvar+1))
            B=0.5*(uold(ind_cell(i),7)+uold(ind_cell(i),nvar+2))
@@ -370,17 +355,15 @@ subroutine velocity_fine(ilevel)
 
            ! we have to modify the 2 normal components of the magnetic field
            if(ind .eq. 1 .or. ind .eq. 3 .or. ind .eq. 5 .or. ind .eq. 7) then 
-              uold(ind_cell(i),6) = uold(ind_cell_vois,9)
+              uold(ind_cell(i),6) = uold(ind_cell_vois,nvar+1)
  
-              uold(ind_cell(i),9) = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),10) - uold(ind_cell(i),11) 
-!              uold(ind_cell(i),9) = uold(ind_cell(i),10) + uold(ind_cell(i),11) - uold(ind_cell(i),6) - uold(ind_cell(i),7) - uold(ind_cell(i),8) 
+              uold(ind_cell(i),nvar+1) = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),nvar+2) - uold(ind_cell(i),nvar+3) 
            else
               !should be equal to uold(ind_cell(i),9) of the preceeding case 
-              uold(ind_cell(i),6) =  uold(ind_cell(i),7) + uold(ind_cell(i),8)  + uold(ind_cell_vois,9) - uold(ind_cell(i),10) - uold(ind_cell(i),11) 
-!              uold(ind_cell(i),6) =  uold(ind_cell(i),7) + uold(ind_cell(i),8)  + uold(ind_cell(i),9) - uold(ind_cell(i),10) - uold(ind_cell(i),11) 
+              uold(ind_cell(i),6) =  uold(ind_cell(i),7) + uold(ind_cell(i),8)  + uold(ind_cell_vois,nvar+1) - uold(ind_cell(i),nvar+2) - uold(ind_cell(i),nvar+3) 
 
               !ensure div B
-              uold(ind_cell(i),9) = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),10) - uold(ind_cell(i),11) 
+              uold(ind_cell(i),nvar+1) = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),nvar+2) - uold(ind_cell(i),nvar+3) 
            endif
 
 
@@ -413,7 +396,7 @@ subroutine velocity_fine(ilevel)
              ind_cell_vois = ind_cell_vois - 2*ngridmax
            endif
 
-           uold(ind_cell(i),1:11) =  uold(ind_cell_vois,1:11) 
+           uold(ind_cell(i),1:nvar+3) =  uold(ind_cell_vois,1:nvar+3) 
 
            A=0.5*(uold(ind_cell(i),6)+uold(ind_cell(i),nvar+1))
            B=0.5*(uold(ind_cell(i),7)+uold(ind_cell(i),nvar+2))
@@ -426,15 +409,15 @@ subroutine velocity_fine(ilevel)
 
            ! we have to modify the 2 normal components of the magnetic field
            if(ind .eq. 3 .or. ind .eq. 4 .or. ind .eq. 7 .or. ind .eq. 8) then 
-              uold(ind_cell(i),10) = uold(ind_cell_vois,7)
+              uold(ind_cell(i),nvar+2) = uold(ind_cell_vois,7)
  
-              uold(ind_cell(i),7)  = uold(ind_cell(i),9) + uold(ind_cell(i),10) + uold(ind_cell(i),11) - uold(ind_cell(i),6) - uold(ind_cell(i),8) 
+              uold(ind_cell(i),7)  = uold(ind_cell(i),nvar+1) + uold(ind_cell(i),nvar+2) + uold(ind_cell(i),nvar+3) - uold(ind_cell(i),6) - uold(ind_cell(i),8) 
            else
               !should be equal to uold(ind_cell(i),7) of the preceeding case 
-              uold(ind_cell(i),10) =  uold(ind_cell(i),9 ) + uold(ind_cell_vois,7) + uold(ind_cell(i),11) - uold(ind_cell(i),6)  - uold(ind_cell(i),8) 
+              uold(ind_cell(i),nvar+2) =  uold(ind_cell(i),nvar+1 ) + uold(ind_cell_vois,7) + uold(ind_cell(i),nvar+3) - uold(ind_cell(i),6)  - uold(ind_cell(i),8) 
 
               !ensure div B
-              uold(ind_cell(i),7) =  uold(ind_cell(i),9) + uold(ind_cell(i),10) + uold(ind_cell(i),11)  -uold(ind_cell(i),6) - uold(ind_cell(i),8) 
+              uold(ind_cell(i),7) =  uold(ind_cell(i),nvar+1) + uold(ind_cell(i),nvar+2) + uold(ind_cell(i),nvar+3)  -uold(ind_cell(i),6) - uold(ind_cell(i),8) 
            endif
 
 
@@ -459,7 +442,7 @@ subroutine velocity_fine(ilevel)
              ind_cell_vois = ind_cell_vois + 2*ngridmax
            endif
 
-           uold(ind_cell(i),1:11) =  uold(ind_cell_vois,1:11) 
+           uold(ind_cell(i),1:nvar+3) =  uold(ind_cell_vois,1:nvar+3) 
 
            A=0.5*(uold(ind_cell(i),6)+uold(ind_cell(i),nvar+1))
            B=0.5*(uold(ind_cell(i),7)+uold(ind_cell(i),nvar+2))
@@ -471,15 +454,15 @@ subroutine velocity_fine(ilevel)
 
            ! we have to modify the 2 normal components of the magnetic field
            if(ind .eq. 1 .or. ind .eq. 2 .or. ind .eq. 5 .or. ind .eq. 6) then 
-              uold(ind_cell(i),7) = uold(ind_cell_vois,10)
+              uold(ind_cell(i),7) = uold(ind_cell_vois,nvar+2)
  
-              uold(ind_cell(i),10)  = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),9) - uold(ind_cell(i),11) 
+              uold(ind_cell(i),nvar+2)  = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),nvar+1) - uold(ind_cell(i),nvar+3) 
            else
               !should be equal to uold(ind_cell(i),10) of the preceeding case 
-              uold(ind_cell(i),7) =  uold(ind_cell(i),6 ) + uold(ind_cell_vois,10) + uold(ind_cell(i),8) - uold(ind_cell(i),9)  - uold(ind_cell(i),11) 
+              uold(ind_cell(i),7) =  uold(ind_cell(i),6 ) + uold(ind_cell_vois,nvar+2) + uold(ind_cell(i),8) - uold(ind_cell(i),nvar+1)  - uold(ind_cell(i),nvar+3) 
 
               !ensure div B
-              uold(ind_cell(i),10) =  uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8)  -uold(ind_cell(i),9) - uold(ind_cell(i),11) 
+              uold(ind_cell(i),nvar+2) =  uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8)  -uold(ind_cell(i),nvar+1) - uold(ind_cell(i),nvar+3) 
            endif
 
            A=0.5*(uold(ind_cell(i),6)+uold(ind_cell(i),nvar+1))
@@ -508,7 +491,7 @@ subroutine velocity_fine(ilevel)
              ind_cell_vois = ind_cell_vois - 4*ngridmax
            endif
 
-           uold(ind_cell(i),1:11) =  uold(ind_cell_vois,1:11) 
+           uold(ind_cell(i),1:nvar+3) =  uold(ind_cell_vois,1:nvar+3) 
 
            A=0.5*(uold(ind_cell(i),6)+uold(ind_cell(i),nvar+1))
            B=0.5*(uold(ind_cell(i),7)+uold(ind_cell(i),nvar+2))
@@ -521,15 +504,15 @@ subroutine velocity_fine(ilevel)
 
            ! we have to modify the 2 normal components of the magnetic field
            if(ind .eq. 5 .or. ind .eq. 6 .or. ind .eq. 7 .or. ind .eq. 8) then 
-              uold(ind_cell(i),11) = uold(ind_cell_vois,8)
+              uold(ind_cell(i),nvar+3) = uold(ind_cell_vois,8)
  
-              uold(ind_cell(i),8)  = uold(ind_cell(i),9) + uold(ind_cell(i),10) + uold(ind_cell(i),11) - uold(ind_cell(i),6) - uold(ind_cell(i),7) 
+              uold(ind_cell(i),8)  = uold(ind_cell(i),nvar+1) + uold(ind_cell(i),nvar+2) + uold(ind_cell(i),nvar+3) - uold(ind_cell(i),6) - uold(ind_cell(i),7) 
            else
               !should be equal to uold(ind_cell(i),8) of the preceeding case 
-              uold(ind_cell(i),11) =  uold(ind_cell(i), 9) + uold(ind_cell(i),10) + uold(ind_cell_vois,8) - uold(ind_cell(i),6)  - uold(ind_cell(i),7) 
+              uold(ind_cell(i),nvar+3) =  uold(ind_cell(i), nvar+1) + uold(ind_cell(i),nvar+2) + uold(ind_cell_vois,8) - uold(ind_cell(i),6)  - uold(ind_cell(i),7) 
 
               !ensure div B
-              uold(ind_cell(i),8) =  uold(ind_cell(i),9) + uold(ind_cell(i),10) + uold(ind_cell(i),11)  -uold(ind_cell(i),6) - uold(ind_cell(i),7) 
+              uold(ind_cell(i),8) =  uold(ind_cell(i),nvar+1) + uold(ind_cell(i),nvar+2) + uold(ind_cell(i),nvar+3)  -uold(ind_cell(i),6) - uold(ind_cell(i),7) 
 
            endif
 
@@ -559,7 +542,7 @@ subroutine velocity_fine(ilevel)
              ind_cell_vois = ind_cell_vois + 4*ngridmax
            endif
 
-           uold(ind_cell(i),1:11) =  uold(ind_cell_vois,1:11) 
+           uold(ind_cell(i),1:nvar+3) =  uold(ind_cell_vois,1:nvar+3) 
 
            A=0.5*(uold(ind_cell(i),6)+uold(ind_cell(i),nvar+1))
            B=0.5*(uold(ind_cell(i),7)+uold(ind_cell(i),nvar+2))
@@ -572,15 +555,15 @@ subroutine velocity_fine(ilevel)
 
            ! we have to modify the 2 normal components of the magnetic field
            if(ind .eq. 1 .or. ind .eq. 2 .or. ind .eq. 3 .or. ind .eq. 4) then 
-              uold(ind_cell(i),8) = uold(ind_cell_vois,11)
+              uold(ind_cell(i),8) = uold(ind_cell_vois,nvar+3)
  
-              uold(ind_cell(i),11)  = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),9) - uold(ind_cell(i),10) 
+              uold(ind_cell(i),nvar+3)  = uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8) - uold(ind_cell(i),nvar+1) - uold(ind_cell(i),nvar+2) 
            else
-              !should be equal to uold(ind_cell(i),11) of the preceeding case 
-              uold(ind_cell(i),8) =  uold(ind_cell(i), 6) + uold(ind_cell(i),7) + uold(ind_cell_vois,11) - uold(ind_cell(i),9)  - uold(ind_cell(i),10) 
+              !should be equal to uold(ind_cell(i),nvar+3) of the preceeding case 
+              uold(ind_cell(i),8) =  uold(ind_cell(i), 6) + uold(ind_cell(i),7) + uold(ind_cell_vois,nvar+3) - uold(ind_cell(i),nvar+1)  - uold(ind_cell(i),nvar+2) 
 
               !ensure div B
-              uold(ind_cell(i),11) =  uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8)  -uold(ind_cell(i),9) - uold(ind_cell(i),10) 
+              uold(ind_cell(i),nvar+3) =  uold(ind_cell(i),6) + uold(ind_cell(i),7) + uold(ind_cell(i),8)  -uold(ind_cell(i),nvar+1) - uold(ind_cell(i),nvar+2) 
 
            endif
 

@@ -158,7 +158,7 @@ recursive subroutine amr_step(ilevel,icount)
      !----------------------------------------------------
      ! STG HACK - ALLOW FEEDBACK WITHOUT STAR FORMATION
      !if(hydro.and.star.and.eta_sn>0.and.f_w>0)call kinetic_feedback
-     if (eta_sn>0.)call kinetic_feedback
+     if ((eta_sn>0.).and.(pic))call kinetic_feedback
   endif
 
   !--------------------

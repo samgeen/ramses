@@ -56,6 +56,10 @@ subroutine condinit(x,u,dx,nn)
 
 !    myid=1
 
+    call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
+    scale_T2 = scale_T2 * mu
+
+
    !do various things which needs to be done only one time
    if( first .eq. 0.) then
     id=1; iu=2; iv=3; iw=4; ip=5
@@ -65,107 +69,8 @@ subroutine condinit(x,u,dx,nn)
 
     if(myid==1) write(*,*) '** ENTER  in condinit **'
 
-    call units(scale_l,scale_t,scale_d,scale_v,scale_nH,scale_T2)
-    scale_T2 = scale_T2 * mu
 
     call calc_boxlen
-
-    !calculate the mass in code units (Msolar / Mparticle / pc^3
-!    mass_c = mass_c * (2.d33 / (scale_d * scale_l**3) )
-!    done in calc_boxlen
-
-
-    if(myid ==1) write(*,*) 'cloud mass (code units) ',mass_c
-
-    !calculate the sound speed
-    C_s = sqrt( T2_star / scale_T2 )
-    ! Set a WNM pressure with T=8000K and nH=0.5
-    P_WNM = 8000d0/scale_T2 * 0.5/scale_nH
-
-
-    if(myid == 1)  write(*,*) 'T2_star (K) ', T2_star
-    if(myid == 1)  write(*,*)  'C_s (code unist) ', C_s
-
-    !cont_ic is the density contrast between the edge of the cloud and the intercloud medium
-    cont_ic = 10.
-
-    !calculate  zeta=r_ext/r_0
-    zeta = sqrt(cont - 1.)
-
-
-    !calculate an integral used to compute the cloud radius
-    res_int=0.
-    do i=1,1000
-     res_int = res_int + log(1.+(zeta/1000.*i)**2) * zeta/1000.
-     mass_rad(i) = i*zeta/1000. * log(1+(zeta/1000.*i)**2) - res_int
-    enddo
-    res_int = zeta*log(1.+zeta**2) - res_int
-
-
-    !now we determine the central density and the external cloud radius
-    !we have mass = 2 pi rho_c r_0^2 z_0 * res_int
-    !which results from the integration of rho = dc/(1.+(x^2+y^2)/r_O^2+z^2/z_0^2)
-    !for (x^2+y^2)/r_O^2+z^2/z_0^2 < zeta
-    !we also have ff_sct = sqrt(3. pi / 32 / G / d_c) C_s / (r_0 )
-    !which just state the ratio of freefall time over sound crossing time
-    !from these 2 formula, rho_c and r_0 are found to be:
-
-    !ph 01/09 new definition entails r_0 instead of r_0 * zeta, the external radius
-    r_0 = mass_c / (2.*pi*rap*res_int) * (ff_sct)**2 / (3.*pi/32.) / C_s**2
-
-    if (myid ==1) write(*,*) 'inner radius (pc) ',r_0
-
-    d_c = mass_c / (2.*pi*rap*res_int) / r_0**3
-
-    if(myid ==1) write(*,*) 'central density ',d_c
-
-
-
-    ener_therm = 3./2.*mass_c*C_s**2
-    ener_grav  = 3./5.*(mass_c**2)/(r_0*zeta)
-    ener_grav2=0.
-    do i=1,1000
-     ener_grav2 = ener_grav2 + (i*zeta/1000.) / (1.+(zeta/1000.*i)**2) * zeta/1000. * mass_rad(i)
-    enddo
-    ener_grav2 = ener_grav2 * 8.*(pi**2)*(d_c**2)*(r_0**5)
-
-
-
-    !angular velocity
-    omega = ff_rt * 2.*pi * sqrt( 32.*d_c/3./pi)
-
-    !central value of magnetic field
-    !remember magnetic variable is B/sqrt(4pi)
-
-    !ph 01/09 new definition entails r_0 instead of r_0 * zeta, the external radius
-    B_c = ff_act * sqrt( 32./3./pi) * d_c * r_0
-
-
-    mass_sph = d_c / cont * (boxlen*(0.5**levelmin))**3
-
-    !the smallest initial column density
-    min_col_d = boxlen * d_c / cont / cont_ic
-
-    !the largest initial column density
-    !obtained by integrating the density distribution through the box
-    max_col_d = r_0*d_c*atan(zeta) + (boxlen -2.*r_0*zeta) * d_c / cont / cont_ic
-
-    if (myid==1) write(*,*) 'valeur du champ magnetique central non normalise B_c', B_c
-    if (myid==1) write(*,*) 'valeur du champ magnetique a l exterieur ', B_c*min_col_d/max_col_d
-
-    !calculate the value of mu the mass to flux over critical mass to flux ratio
-    !from Mouschovias & Spitzer 1979 M/phi)_crit = 1/(3pi) * sqrt(5/G) * 0.53
-    !since B(r)=B_c * sig(r)/sig(0), phi = B_c * mass_c / sig(0)
-    !thus mass_c / phi = sig(0) / B_c
-    !taking into account the fact that B_c = champ mag / sqrt(4 pi)
-    ! we have in code units mu = sig(0) / (B_c*sqrt(4 pi)) / (sqrt(5)/(3 pi) * 0.53)
-#ifdef SOLVERmhd
-    if (myid ==1) write(*,*) 'the mass to flux over critical mass to flux ratio in the case of a spheroidal cloud (not correct if rap ne 1)'
-    if (myid ==1) write(*,*) 'mu= ',max_col_d / (B_c*sqrt(4.*pi)) / (sqrt(5.)/(3.*pi) * 0.53)
-    !note here we make the approximation that max_col_d is equal to the column density through the cloud which is note exactly
-    !the case since the column density of the external medium is also taken into account
-#endif
-
 
 #ifdef TURBULENCE
     !now read the turbulent velocity field used as initial condition
@@ -268,9 +173,9 @@ subroutine condinit(x,u,dx,nn)
     102 format(i5)
 
     if (myid ==1)  write(*,*) 'Reading achieved'
-    first = 1.
 
 #endif
+    first = 1.
    endif
 
 
@@ -279,6 +184,7 @@ subroutine condinit(x,u,dx,nn)
    T0 = 1e4 ! TODO: change cooling function
    call rho_ana(x,rho,T0,nn)
    
+
 
    DO i=1,nn
 
@@ -291,7 +197,9 @@ subroutine condinit(x,u,dx,nn)
        !initialise the density field
        ! Eqn 16 in Creasey et al 2013
        q(i,1) = rho(i)
+       q(i,2:4) = 0.0
        q(i,5) = q(i,1) * T0 / scale_T2
+       q(i,6:8) = 0.0
 
 #ifdef TURBULENT
 
@@ -331,7 +239,6 @@ subroutine condinit(x,u,dx,nn)
        endif
 
 #endif
-       q(i, 2:4) = 0.0
 
 
   ENDDO
@@ -412,15 +319,15 @@ subroutine condinit(x,u,dx,nn)
   u(1:nn,4)=q(1:nn,1)*q(1:nn,4)
   ! kinetic energy
   u(1:nn,5)=0.0d0
-  u(1:nn,5)=u(1:nn,5)+0.5*q(1:nn,1)*q(1:nn,2)**2
-  u(1:nn,5)=u(1:nn,5)+0.5*q(1:nn,1)*q(1:nn,3)**2
-  u(1:nn,5)=u(1:nn,5)+0.5*q(1:nn,1)*q(1:nn,4)**2
+  !u(1:nn,5)=u(1:nn,5)+0.5*q(1:nn,1)*q(1:nn,2)**2
+  !u(1:nn,5)=u(1:nn,5)+0.5*q(1:nn,1)*q(1:nn,3)**2
+  !u(1:nn,5)=u(1:nn,5)+0.5*q(1:nn,1)*q(1:nn,4)**2
   !kinetic + magnetic energy
-#ifdef SOLVERmhd
-  u(1:nn,5)=u(1:nn,5)+0.125*(q(1:nn,6)+q(1:nn,nvar+1))**2
-  u(1:nn,5)=u(1:nn,5)+0.125*(q(1:nn,7)+q(1:nn,nvar+2))**2
-  u(1:nn,5)=u(1:nn,5)+0.125*(q(1:nn,8)+q(1:nn,nvar+3))**2
-#endif
+!#ifdef SOLVERmhd
+!  u(1:nn,5)=u(1:nn,5)+0.125*(q(1:nn,6)+q(1:nn,nvar+1))**2
+!  u(1:nn,5)=u(1:nn,5)+0.125*(q(1:nn,7)+q(1:nn,nvar+2))**2
+!  u(1:nn,5)=u(1:nn,5)+0.125*(q(1:nn,8)+q(1:nn,nvar+3))**2
+!#endif
   ! pressure -> total fluid energy
   u(1:nn,5)=u(1:nn,5)+q(1:nn,5)/(gamma-1.0d0)
   ! magnetic field

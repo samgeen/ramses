@@ -29,7 +29,7 @@ subroutine solve_cooling_ph(nH,T2,zsolar,boost,dt,deltaT2,ncell)
   call solve_cooling(nH,T2,zsolar,boost,dt,deltaT2,ncell)
   T0 = 1e4/scale_T2 ! TODO: UN-HARD-CODE???
   do i=1,ncell
-     if (T2(i) < T0) T2(i) = T0 
+     if (T2(i) + deltaT2(i) < T0) deltaT2(i) = T0 - T2(i)
   end do
 end subroutine solve_cooling_ph
 

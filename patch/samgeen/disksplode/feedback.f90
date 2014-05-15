@@ -458,6 +458,7 @@ subroutine kinetic_feedback
   !------------------------------------------------------
   ! Gather GMC particles eligible for disruption
   !------------------------------------------------------
+  !write(*,*) "MAX TP, curr_time",maxval(tp), current_time
   nSN_loc=0
   ! Loop over levels
   do icpu=1,ncpu
@@ -474,7 +475,9 @@ subroutine kinetic_feedback
            do jpart=1,npart1
               ! Save next particle   <--- Very important !!!
               next_part=nextp(ipart)
-              if(idp(ipart).le.0.and. tp(ipart).lt.(current_time-t0))then
+              !if(idp(ipart).le.0.and. tp(ipart).lt.(current_time-t0))then
+              ! STG HACK - INSTANT BOOM
+              if(idp(ipart).le.0.and. tp(ipart).le.(current_time))then
                  npart2=npart2+1
               endif
               ipart=next_part  ! Go to next particle
@@ -534,7 +537,9 @@ subroutine kinetic_feedback
            do jpart=1,npart1
               ! Save next particle   <--- Very important !!!
               next_part=nextp(ipart)
-              if(idp(ipart).le.0.and. tp(ipart).lt.(current_time-t0))then
+              ! STG HACK - INSTANT BOOM
+              !if(idp(ipart).le.0.and. tp(ipart).lt.(current_time-t0))then
+              if(idp(ipart).le.0.and. tp(ipart).le.(current_time))then
                  iSN=iSN+1
                  xSN(iSN,1)=xp(ipart,1)
                  xSN(iSN,2)=xp(ipart,2)

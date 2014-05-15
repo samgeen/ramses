@@ -71,14 +71,15 @@ subroutine init_part
   allocate(levelp(npartmax))
   allocate(idp   (npartmax))
   xp=0.0; vp=0.0; mp=0.0; levelp=0; idp=0
-  if(star.or.sink)then
-     allocate(tp(npartmax))
-     tp=0.0
-     if(metal)then
-        allocate(zp(npartmax))
-        zp=0.0
-     end if
+  !if(star.or.sink)then
+  ! STG HACK - ALLOCATE tp
+  allocate(tp(npartmax))
+  tp=0.0
+  if(metal)then
+     allocate(zp(npartmax))
+     zp=0.0
   end if
+  !end if
   if(sink)then
      ! Important persistent sink variables
      allocate(msink(1:nsinkmax))
@@ -791,7 +792,7 @@ subroutine init_part
                  mm(i  )=mm1
                  tt(i  )=tt1
                  ! Set star particles to -ve indices, i.e. not SN yet
-                 if (tt(i).lt.0.0) then
+                 if (tt(i).ne.0.0) then
                     ii(i  )=-indglob
                  else
                     ii(i  )=indglob
