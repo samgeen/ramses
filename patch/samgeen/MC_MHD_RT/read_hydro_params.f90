@@ -26,7 +26,7 @@ subroutine read_hydro_params(nml_ok)
        & ,bl_fac
   namelist/hydro_params/gamma,courant_factor,smallr,smallc &
        & ,niter_riemann,slope_type &
-       & ,pressure_fix,beta_fix,scheme,riemann,riemann2d &
+       & ,pressure_fix,beta_fix,scheme,riemann,riemann2d,switch_solv &
        ! MC ADDITIONS
        & ,difmag
   namelist/refine_params/x_refine,y_refine,z_refine,r_refine &
